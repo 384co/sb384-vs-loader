@@ -151,6 +151,18 @@ namespace AMDLoader {
 				if (trustedTypesPolicy) {
 					scriptSrc = trustedTypesPolicy.createScriptURL(scriptSrc);
 				}
+
+				/* SB384 START */
+				if ((window as any).SB384replaceFiles) {
+					// check for 'override' of what URL to use
+					const replaceURLstring: string = (window as any).SB384replaceFiles.get(scriptSrc);
+					if (replaceURLstring) {
+						console.log("++++ SB384 loader replacing:", scriptSrc, "with", replaceURLstring.slice(0, 100));
+						scriptSrc = replaceURLstring;
+					}
+				}
+				/* SB384 END */
+
 				script.setAttribute('src', scriptSrc);
 
 				// Propagate CSP nonce to dynamically created script tag.
