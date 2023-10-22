@@ -656,7 +656,8 @@ var AMDLoader;
         try {
             const func = (trustedTypesPolicy
                 ? self.eval(trustedTypesPolicy.createScript('', 'true'))
-                : new Function('true'));
+                : new Function('true') // CodeQL [SM01632] the loader is responsible with loading code, fetch + eval is used on the web worker instead of importScripts if possible because importScripts is synchronous and we observed deadlocks on Safari
+            );
             func.call(self);
             return true;
         }
@@ -705,7 +706,8 @@ var AMDLoader;
                         text = `${text}\n//# sourceURL=${scriptSrc}`;
                         const func = (trustedTypesPolicy
                             ? self.eval(trustedTypesPolicy.createScript('', text))
-                            : new Function(text));
+                            : new Function(text) // CodeQL [SM01632] the loader is responsible with loading code, fetch + eval is used on the web worker instead of importScripts if possible because importScripts is synchronous and we observed deadlocks on Safari
+                        );
                         func.call(self);
                         callback();
                     }).then(undefined, errorback);
@@ -1246,6 +1248,7 @@ var AMDLoader;
             this._buildInfoPath = [];
             this._buildInfoDefineStack = [];
             this._buildInfoDependencies = [];
+            this._requireFunc.moduleManager = this;
         }
         reset() {
             return new ModuleManager(this._env, this._scriptLoader, this._defineFunc, this._requireFunc, this._loaderAvailableTimestamp);
