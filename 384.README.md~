@@ -1,9 +1,0 @@
-# VSCode Loader - SB384
-
-For details on usage and development see the main [README].
-
-This version tracks psm384 fork of vscode-loader. Use branch "dev".
-
-(Minimal) modifications to support SB384FS.
-
-MIT License (see LICENSE.txt)
