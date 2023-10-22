@@ -641,6 +641,16 @@ var AMDLoader;
                 if (trustedTypesPolicy) {
                     scriptSrc = trustedTypesPolicy.createScriptURL(scriptSrc);
                 }
+                /* SB384 START */
+                if (window.SB384replaceFiles) {
+                    // check for 'override' of what URL to use
+                    const replaceURLstring = window.SB384replaceFiles.get(scriptSrc);
+                    if (replaceURLstring) {
+                        console.log("++++ SB384 loader replacing:", scriptSrc, "with", replaceURLstring.slice(0, 100));
+                        scriptSrc = replaceURLstring;
+                    }
+                }
+                /* SB384 END */
                 script.setAttribute('src', scriptSrc);
                 // Propagate CSP nonce to dynamically created script tag.
                 const { cspNonce } = moduleManager.getConfig().getOptionsLiteral();
@@ -656,8 +666,7 @@ var AMDLoader;
         try {
             const func = (trustedTypesPolicy
                 ? self.eval(trustedTypesPolicy.createScript('', 'true'))
-                : new Function('true') // CodeQL [SM01632] the loader is responsible with loading code, fetch + eval is used on the web worker instead of importScripts if possible because importScripts is synchronous and we observed deadlocks on Safari
-            );
+                : new Function('true'));
             func.call(self);
             return true;
         }
@@ -706,8 +715,7 @@ var AMDLoader;
                         text = `${text}\n//# sourceURL=${scriptSrc}`;
                         const func = (trustedTypesPolicy
                             ? self.eval(trustedTypesPolicy.createScript('', text))
-                            : new Function(text) // CodeQL [SM01632] the loader is responsible with loading code, fetch + eval is used on the web worker instead of importScripts if possible because importScripts is synchronous and we observed deadlocks on Safari
-                        );
+                            : new Function(text));
                         func.call(self);
                         callback();
                     }).then(undefined, errorback);
@@ -1248,7 +1256,6 @@ var AMDLoader;
             this._buildInfoPath = [];
             this._buildInfoDefineStack = [];
             this._buildInfoDependencies = [];
-            this._requireFunc.moduleManager = this;
         }
         reset() {
             return new ModuleManager(this._env, this._scriptLoader, this._defineFunc, this._requireFunc, this._loaderAvailableTimestamp);
@@ -1574,7 +1581,21 @@ var AMDLoader;
                 return this._relativeRequire(moduleIdResolver, dependencies, callback, errorback);
             });
             result.toUrl = (id) => {
-                return this._config.requireToUrl(moduleIdResolver.resolveModule(id));
+                // return this._config.requireToUrl(moduleIdResolver.resolveModule(id));
+                /* SB384 START */
+                const returnURL = this._config.requireToUrl(moduleIdResolver.resolveModule(id));
+                if (window.SB384replaceFiles) {
+                    // check for 'override' of what URL to use
+                    // same override as in scriptLoader.ts but we need this here in order to
+                    // catch cases of (for example) direct loading into a new Worker()
+                    const replaceURLstring = window.SB384replaceFiles.get(returnURL);
+                    if (replaceURLstring) {
+                        console.info("++++ SB384 loader replacing: ", returnURL, " with: ", replaceURLstring.slice(0, 100));
+                        return replaceURLstring;
+                    }
+                }
+                return returnURL;
+                /* SB384 END */
             };
             result.getStats = () => {
                 return this.getLoaderEvents();

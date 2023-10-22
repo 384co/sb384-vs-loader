@@ -151,6 +151,18 @@ namespace AMDLoader {
 				if (trustedTypesPolicy) {
 					scriptSrc = trustedTypesPolicy.createScriptURL(scriptSrc);
 				}
+
+				/* SB384 START */
+				if ((window as any).SB384replaceFiles) {
+					// check for 'override' of what URL to use
+					const replaceURLstring: string = (window as any).SB384replaceFiles.get(scriptSrc);
+					if (replaceURLstring) {
+						console.log("++++ SB384 loader replacing:", scriptSrc, "with", replaceURLstring.slice(0, 100));
+						scriptSrc = replaceURLstring;
+					}
+				}
+				/* SB384 END */
+
 				script.setAttribute('src', scriptSrc);
 
 				// Propagate CSP nonce to dynamically created script tag.
@@ -170,7 +182,7 @@ namespace AMDLoader {
 			const func = (
 				trustedTypesPolicy
 					? self.eval(trustedTypesPolicy.createScript('', 'true'))
-					: new Function('true') // CodeQL [SM01632] the loader is responsible with loading code, fetch + eval is used on the web worker instead of importScripts if possible because importScripts is synchronous and we observed deadlocks on Safari
+					: new Function('true')
 			);
 			func.call(self);
 			return true;
@@ -226,7 +238,7 @@ namespace AMDLoader {
 						const func = (
 							trustedTypesPolicy
 								? self.eval(trustedTypesPolicy.createScript('', text))
-								: new Function(text) // CodeQL [SM01632] the loader is responsible with loading code, fetch + eval is used on the web worker instead of importScripts if possible because importScripts is synchronous and we observed deadlocks on Safari
+								: new Function(text)
 						);
 						func.call(self);
 						callback();
